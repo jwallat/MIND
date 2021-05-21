@@ -4,24 +4,44 @@ from ..items import NewsItem
 import os
 import json
 
+
 class MSNSpider(scrapy.Spider):
     name = "msn"
     allowed_domains = ["msn.com"]
 
-    start_urls = []
-    with open(os.environ["MIND_NEWS_PATH"], 'r') as f:
-        for l in f:
-            _, _, _, _, _, url, _, _ = l.strip('\n').split('\t')
-            start_urls.append(url)
+    # start_urls = []
+    # with open(os.environ["MIND_NEWS_PATH"], 'r') as f:
+    #     for l in f:
+    #         newsid, _, _, _, _, url, _, _ = l.strip('\n').split('\t')
+    #         start_urls.append((newsid, url))
 
     # start_urls = [
     #     # ss
-    #     "https://mind201910small.blob.core.windows.net/archive/AAGH0ET.html",
+    #     (1, "https://mind201910small.blob.core.windows.net/archive/AAGH0ET.html"),
     #     # ar
-    #     "https://mind201910small.blob.core.windows.net/archive/AABmf2I.html",
+    #     (4, "https://mind201910small.blob.core.windows.net/archive/AABmf2I.html"),
     #     # vi
-    #     "https://mind201910small.blob.core.windows.net/archive/AAI33em.html"
+    #     (7, "https://mind201910small.blob.core.windows.net/archive/AAI33em.html")
     # ]
+
+    def start_requests(self):
+        start_urls = []
+        with open(os.environ["MIND_NEWS_PATH"], 'r') as f:
+            for l in f:
+                newsid, _, _, _, _, url, _, _ = l.strip('\n').split('\t')
+                start_urls.append((newsid, url))
+        # start_urls = [
+        #     # ss
+        #     (1, "https://mind201910small.blob.core.windows.net/archive/AAGH0ET.html"),
+        #     # ar
+        #     (4, "https://mind201910small.blob.core.windows.net/archive/AABmf2I.html"),
+        #     # vi
+        #     (7, "https://mind201910small.blob.core.windows.net/archive/AAI33em.html")
+        # ]
+
+        for obj in start_urls:
+            newsid, url = obj
+            yield scrapy.Request(url=url, meta={"newsid": newsid})
 
     def __init__(self):
         with open('./doc_type.json', 'r') as f:
@@ -33,6 +53,9 @@ class MSNSpider(scrapy.Spider):
 
         url = unquote(response.url)
         item = NewsItem()
+
+        newsid = response.meta['newsid']
+        item['newsid'] = newsid
         # parse nid, vert and subvert
         nid_type = self.parse_nid_from_url(item, url)
 
@@ -56,14 +79,12 @@ class MSNSpider(scrapy.Spider):
 
         # type2: ss
         if nid_type == 'ss':
-            body = response.xpath('//div[@class="gallery-caption-text"]//text()').getall()
+            body = response.xpath(
+                '//div[@class="gallery-caption-text"]//text()').getall()
 
         # type3: vi
         if nid_type == 'vi':
-            body = response.xpath('//div[@class="video-description"]//text()').getall()
+            body = response.xpath(
+                '//div[@class="video-description"]//text()').getall()
 
         item['body'] = body
-        
-
-         
-        

@@ -7,8 +7,9 @@
 
 import scrapy
 
+
 class NewsItem(scrapy.Item):
+    newsid = scrapy.Field()
     nid = scrapy.Field()
     body = scrapy.Field()
     pass
-
